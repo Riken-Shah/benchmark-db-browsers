@@ -33,9 +33,10 @@ The "in-memory" toggle runs SQLite as `:memory:` and PGlite as `memory://`. Inde
 ## Methodology notes
 
 - Same row data is fed to all three engines for each size, so they are working on identical inputs.
-- SQLite point/indexed reads use a prepared statement bound in a loop.
-- PGlite point/indexed reads use SQL-level `PREPARE`/`EXECUTE` inside an explicit transaction, with `ANALYZE rows` after bulk write so the planner has stats.
+- SQLite point/indexed reads use a prepared statement bound in a loop inside the worker (no postMessage per row).
+- PGlite point/indexed reads use a single batched query: `WHERE id = ANY($1::text[])`. The full id list is sent in one round trip. PGlite is also created with `relaxedDurability: true` and `ANALYZE rows` runs after bulk write so the planner has stats.
 - IndexedDB point/indexed reads issue all N keyed `get()`s in a single read-only transaction.
+- Probe ids and emails are sampled without replacement so the batched `ANY` returns exactly N rows.
 - All engines run sequentially (IDB, then SQLite, then PGlite) to avoid sharing the same CPU thread or disk during a measurement.
 
 ## Fairness
@@ -47,8 +48,8 @@ Each engine uses its own idiomatic best path, not a one-shape-fits-all loop. The
 | Init | reopen connection | spawn worker, compile WASM, install SAH pool, open DB | recreate PGlite instance (worker, WASM, restore data dir) |
 | Bulk write | single readwrite tx, batched `store.put` | `BEGIN` + prepared `INSERT` loop + `COMMIT` | `COPY FROM '/dev/blob'` then `ANALYZE` |
 | Seq read | `openCursor` iterate, materialize each row | prepared `SELECT` + step loop, materialize each row | single `pg.query('SELECT ... ORDER BY id')` |
-| Random point read | all 100 `get(id)` queued in one read-only tx, `Promise.all` on completion | prepared `SELECT` bound in a tight worker-side loop, no postMessage per query | `PREPARE qpt`, `BEGIN`, `EXECUTE qpt($1)` loop, `COMMIT`, `DEALLOCATE` |
-| Indexed query | same pattern via `index('email')` | same pattern by `email` | same pattern by `email` |
+| Random point read | all 100 `get(id)` queued in one read-only tx, `Promise.all` on completion | prepared `SELECT` bound in a tight worker-side loop, no postMessage per query | single query, `WHERE id = ANY($1::text[])` with the full id list |
+| Indexed query | same pattern via `index('email')` | same pattern by `email` | single query, `WHERE email = ANY($1::text[])` with the full email list |
 
 ## Run it locally
 

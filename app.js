@@ -49,9 +49,17 @@ function generateRows(n) {
 }
 
 function sampleField(rows, k, field) {
-  const out = new Array(k);
   const n = rows.length;
-  for (let i = 0; i < k; i++) out[i] = rows[(Math.random() * n) | 0][field];
+  if (k >= n) return rows.map((r) => r[field]);
+  const seen = new Set();
+  const out = new Array(k);
+  let i = 0;
+  while (i < k) {
+    const idx = (Math.random() * n) | 0;
+    if (seen.has(idx)) continue;
+    seen.add(idx);
+    out[i++] = rows[idx][field];
+  }
   return out;
 }
 
@@ -251,7 +259,7 @@ const pgliteEngine = (() => {
       await closePg();
       const Ctor = await ensureModule();
       const uri = mode === 'persistent' ? 'idb://bench_pglite' : 'memory://';
-      pg = await Ctor.create(uri);
+      pg = await Ctor.create(uri, { relaxedDurability: true });
       // Coerce a version readout. PGlite reports the embedded Postgres version.
       try {
         const v = await pg.query('SELECT version() AS v');
@@ -292,45 +300,21 @@ const pgliteEngine = (() => {
       return res.rows.length;
     },
     async pointReads(ids) {
-      // Prepare once, run all 1000 inside a single explicit transaction so we don't pay
-      // per-query parse+plan and implicit BEGIN/COMMIT 1000 times. Matches SQLite's
-      // prepared-statement loop.
-      try { await pg.exec('DEALLOCATE qpt'); } catch {}
-      await pg.exec('PREPARE qpt(text) AS SELECT id,name,email,created_at,score,payload FROM rows WHERE id = $1');
-      await pg.exec('BEGIN');
-      let hit = 0;
-      try {
-        for (let i = 0; i < ids.length; i++) {
-          const r = await pg.query('EXECUTE qpt($1)', [ids[i]]);
-          if (r.rows.length) hit++;
-        }
-        await pg.exec('COMMIT');
-      } catch (e) {
-        try { await pg.exec('ROLLBACK'); } catch {}
-        throw e;
-      } finally {
-        try { await pg.exec('DEALLOCATE qpt'); } catch {}
-      }
-      return hit;
+      // PGlite's idiomatic batch pattern. One query with id = ANY(text[]) sends the
+      // whole id list in a single round trip and returns matching rows. This avoids
+      // the per-query JS/WASM overhead that dominates 100 sequential EXECUTEs.
+      const r = await pg.query(
+        'SELECT id,name,email,created_at,score,payload FROM rows WHERE id = ANY($1::text[])',
+        [ids],
+      );
+      return r.rows.length;
     },
     async indexedReads(emails) {
-      try { await pg.exec('DEALLOCATE qei'); } catch {}
-      await pg.exec('PREPARE qei(text) AS SELECT id,name,email,created_at,score,payload FROM rows WHERE email = $1');
-      await pg.exec('BEGIN');
-      let hit = 0;
-      try {
-        for (let i = 0; i < emails.length; i++) {
-          const r = await pg.query('EXECUTE qei($1)', [emails[i]]);
-          if (r.rows.length) hit++;
-        }
-        await pg.exec('COMMIT');
-      } catch (e) {
-        try { await pg.exec('ROLLBACK'); } catch {}
-        throw e;
-      } finally {
-        try { await pg.exec('DEALLOCATE qei'); } catch {}
-      }
-      return hit;
+      const r = await pg.query(
+        'SELECT id,name,email,created_at,score,payload FROM rows WHERE email = ANY($1::text[])',
+        [emails],
+      );
+      return r.rows.length;
     },
     async close() { await closePg(); },
     async wipePersistent() {
