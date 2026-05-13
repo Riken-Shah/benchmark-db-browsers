@@ -1,8 +1,11 @@
 # Client-side database benchmark
 
-A head-to-head comparison of three browser-native databases (IndexedDB, SQLite, and PGlite) running entirely in the browser, with no server, no build step, and no dependencies beyond CDN imports.
+A head-to-head comparison of three browser-native databases ([IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API), [SQLite](https://sqlite.org/wasm/), and [PGlite](https://github.com/electric-sql/pglite)) running entirely in the browser, with no server, no build step, and no dependencies beyond CDN imports.
+
+PGlite is a newer take: real PostgreSQL compiled to WASM, running in your tab with its data dir backed by IndexedDB.
 
 **Live demo:** https://benchmark-db-browsers.riken.me
+**Source:** https://github.com/Riken-Shah/benchmark-db-browsers (open source, MIT)
 
 ## What it measures
 
@@ -13,8 +16,8 @@ Five operations across 1k / 10k / 100k rows of a realistic ~200-byte schema:
 | Load & init | Cold-start cost from `import()` to a ready, empty schema |
 | Bulk write | Insert N rows in a single transaction |
 | Sequential read | Read all N rows back in insertion order |
-| Random point read | 200 lookups by random primary key |
-| Indexed query | 200 lookups by indexed secondary column (`email`) |
+| Random point read | 100 lookups by random primary key |
+| Indexed query | 100 lookups by indexed secondary column (`email`) |
 
 Each measurement runs **1 warmup pass + 3 timed passes**, reporting the median.
 
@@ -22,9 +25,9 @@ Each measurement runs **1 warmup pass + 3 timed passes**, reporting the median.
 
 | Engine | Persistent storage |
 |---|---|
-| IndexedDB | Browser-native (this *is* the storage) |
-| SQLite | OPFS, via the **SAH (Sync Access Handle) Pool VFS**: Sync Access Handles in a dedicated worker, no SharedArrayBuffer required |
-| PGlite | Real Postgres compiled to WASM. Pages stored in **IndexedDB** (`idb://` driver) |
+| [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) | Browser-native (this *is* the storage) |
+| [SQLite](https://sqlite.org/wasm/) | OPFS, via the **SAH (Sync Access Handle) Pool VFS**: Sync Access Handles in a dedicated worker, no SharedArrayBuffer required |
+| [PGlite](https://github.com/electric-sql/pglite) | Real Postgres compiled to WASM. Pages stored in **IndexedDB** (`idb://` driver) |
 
 The "in-memory" toggle runs SQLite as `:memory:` and PGlite as `memory://`. IndexedDB has no in-memory mode and is shown as N/A in that mode.
 
@@ -36,7 +39,26 @@ The "in-memory" toggle runs SQLite as `:memory:` and PGlite as `memory://`. Inde
 - IndexedDB point/indexed reads issue all N keyed `get()`s in a single read-only transaction.
 - All engines run sequentially (IDB, then SQLite, then PGlite) to avoid sharing the same CPU thread or disk during a measurement.
 
-PGlite is fundamentally slower than the other two at random point reads. It's the full Postgres engine traversing a B-tree backed by async IndexedDB pages, where SQLite uses purpose-built WASM and IDB uses a single keyed lookup. That gap is honest, not a bug.
+## Fairness
+
+Each engine uses its own idiomatic best path, not a one-shape-fits-all loop. The *shape* of the work differs by engine, and that asymmetry is part of what the benchmark reveals.
+
+| Op | IndexedDB | SQLite | PGlite |
+|---|---|---|---|
+| Init | reopen connection | spawn worker, compile WASM, install SAH pool, open DB | recreate PGlite instance (worker, WASM, restore data dir) |
+| Bulk write | single readwrite tx, batched `store.put` | `BEGIN` + prepared `INSERT` loop + `COMMIT` | `COPY FROM '/dev/blob'` then `ANALYZE` |
+| Seq read | `openCursor` iterate, materialize each row | prepared `SELECT` + step loop, materialize each row | single `pg.query('SELECT ... ORDER BY id')` |
+| Random point read | all 100 `get(id)` queued in one read-only tx, `Promise.all` on completion | prepared `SELECT` bound in a tight worker-side loop, no postMessage per query | `PREPARE qpt`, `BEGIN`, `EXECUTE qpt($1)` loop, `COMMIT`, `DEALLOCATE` |
+| Indexed query | same pattern via `index('email')` | same pattern by `email` | same pattern by `email` |
+
+Honest asymmetries:
+- IDB's "queue all gets in one tx" is structurally faster than the sequential loops used by SQLite/PGlite. It's also the correct way to batch IDB reads in real apps, so the benchmark measures what users would actually write.
+- PGlite is intrinsically async per query (each query has internal `await`s into IDB-backed pages). SQLite's WASM in a worker handles 100 lookups in a single tight loop with no per-query event-loop yield.
+- PGlite includes `ANALYZE` in bulk-write time so the planner has stats; this penalizes its write number and improves its read numbers.
+
+The takeaway: the numbers are honest reflections of each engine's typical cost, not a contrived race.
+
+PGlite is fundamentally slower than the other two at random point reads. It is the full Postgres engine traversing a B-tree backed by async IndexedDB pages, where SQLite uses purpose-built WASM and IDB uses a single keyed lookup. That gap is honest, not a bug.
 
 ## Run it locally
 
@@ -53,8 +75,8 @@ Any static file server works. There is no build step. The site needs to be serve
 
 - Vanilla HTML + ES modules + a single Web Worker for SQLite
 - [Chart.js](https://www.chartjs.org/) 4 for visualization
-- [`@sqlite.org/sqlite-wasm`](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) 3.50
-- [`@electric-sql/pglite`](https://pglite.dev) 0.3
+- [`@sqlite.org/sqlite-wasm`](https://sqlite.org/wasm/) 3.50
+- [`@electric-sql/pglite`](https://github.com/electric-sql/pglite) 0.3 (newer Postgres running as WASM)
 - Source Sans 3 + JetBrains Mono via Google Fonts
 
 ## License

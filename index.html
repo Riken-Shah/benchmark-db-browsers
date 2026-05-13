@@ -72,6 +72,13 @@
     max-width: 620px;
     margin: 0;
   }
+  .sub a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    transition: border-color .15s;
+  }
+  .sub a:hover { border-bottom-color: var(--ink-2); }
   .meta {
     margin-top: 28px;
     display: flex;
@@ -346,7 +353,7 @@
 <main>
   <header>
     <h1>Client-side database benchmark</h1>
-    <p class="sub">A head-to-head comparison of IndexedDB, SQLite WASM, and PGlite running entirely in your browser. One warmup run, three timed runs, median reported.</p>
+    <p class="sub">A head-to-head comparison of <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API" target="_blank" rel="noopener">IndexedDB</a>, <a href="https://sqlite.org/wasm/" target="_blank" rel="noopener">SQLite</a>, and <a href="https://github.com/electric-sql/pglite" target="_blank" rel="noopener">PGlite</a> (newer Postgres running as WASM) running entirely in your browser. One warmup run, three timed runs, median reported.</p>
     <div class="meta">
       <div class="legend">
         <span class="eng" id="eng-idb"><i style="background:var(--idb)"></i> IndexedDB <span class="store" id="store-idb">browser-native</span></span>
@@ -447,7 +454,7 @@
 
   <footer>
     <div id="versions">versions loading…</div>
-    <div>benchmark-db-browsers.riken.me</div>
+    <div>open source · MIT · <a href="https://github.com/Riken-Shah/benchmark-db-browsers" target="_blank" rel="noopener">github.com/Riken-Shah/benchmark-db-browsers</a></div>
   </footer>
 </main>
 
