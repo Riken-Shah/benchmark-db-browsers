@@ -259,7 +259,12 @@ const pgliteEngine = (() => {
       await closePg();
       const Ctor = await ensureModule();
       const uri = mode === 'persistent' ? 'idb://bench_pglite' : 'memory://';
-      pg = await Ctor.create(uri, { relaxedDurability: true });
+      // Note: do NOT enable relaxedDurability. PGlite v0.3.10 has a race where
+      // pg.close() returns before its deferred IDB writes drain; the next
+      // PGlite.create() then crashes inside an onsuccess callback with
+      // "Cannot read properties of undefined (reading 'mode')". The init
+      // benchmark cycles open/close several times, which triggers it reliably.
+      pg = await Ctor.create(uri);
       // Coerce a version readout. PGlite reports the embedded Postgres version.
       try {
         const v = await pg.query('SELECT version() AS v');
