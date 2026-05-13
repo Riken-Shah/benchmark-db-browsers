@@ -1,4 +1,4 @@
-// SQLite worker — hosts @sqlite.org/sqlite-wasm and serves benchmark ops.
+// SQLite worker. Hosts @sqlite.org/sqlite-wasm and serves benchmark ops.
 // Lives in a dedicated Worker so it can use the synchronous OPFS VFS.
 
 import sqlite3InitModule from 'https://cdn.jsdelivr.net/npm/@sqlite.org/sqlite-wasm@3.50.4-build1/sqlite-wasm/jswasm/sqlite3.mjs';
@@ -137,7 +137,7 @@ async function wipePersistent() {
   try {
     if (db) { db.close(); db = null; }
   } catch {}
-  // Wipe via the pool util if available — it knows how to remove its backing files.
+  // Wipe via the pool util if available (it knows how to remove its backing files).
   try {
     if (!sqlite3) await ensureSqlite();
     await ensurePool();

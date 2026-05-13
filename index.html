@@ -3,7 +3,26 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Client-side DB Benchmark — IndexedDB · SQLite WASM · PGlite</title>
+<title>Client-side DB Benchmark: IndexedDB vs SQLite WASM vs PGlite</title>
+<meta name="description" content="Head-to-head benchmark of IndexedDB, SQLite WASM, and PGlite running entirely in your browser. Load, write, sequential read, random read, indexed query.">
+<meta name="theme-color" content="#ffffff">
+<link rel="canonical" href="https://benchmark-db-browsers.riken.me/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Client-side DB Benchmark">
+<meta property="og:title" content="Client-side DB Benchmark: IndexedDB vs SQLite WASM vs PGlite">
+<meta property="og:description" content="Head-to-head benchmark of IndexedDB, SQLite WASM, and PGlite running entirely in your browser.">
+<meta property="og:url" content="https://benchmark-db-browsers.riken.me/">
+<meta property="og:image" content="https://benchmark-db-browsers.riken.me/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Client-side DB Benchmark: IndexedDB vs SQLite WASM vs PGlite">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Client-side DB Benchmark: IndexedDB vs SQLite WASM vs PGlite">
+<meta name="twitter:description" content="Head-to-head benchmark of IndexedDB, SQLite WASM, and PGlite running entirely in your browser.">
+<meta name="twitter:image" content="https://benchmark-db-browsers.riken.me/og.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -353,7 +372,7 @@
     <button id="reset" class="ghost" title="Drop all persistent stores and reload">Clear storage</button>
   </section>
 
-  <div class="progress idle" id="progress">idle — click <em>Run benchmark</em> to begin</div>
+  <div class="progress idle" id="progress">idle. click <em>Run benchmark</em> to begin</div>
 
   <section class="charts" id="charts">
     <div class="card full">

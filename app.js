@@ -274,7 +274,7 @@ const pgliteEngine = (() => {
       `);
     },
     async bulkWrite(rows) {
-      // Use COPY FROM '/dev/blob' — PGlite's fast bulk-load path. Tab-separated text.
+      // Use COPY FROM '/dev/blob' for PGlite's fast bulk-load path. Tab-separated text.
       const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/\t/g, '\\t').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
       const lines = new Array(rows.length);
       for (let i = 0; i < rows.length; i++) {
@@ -380,7 +380,7 @@ async function measureRepeated(setup, run, reps, warmup) {
 const charts = {};
 
 function fmt(v) {
-  if (v == null || !isFinite(v)) return '—';
+  if (v == null || !isFinite(v)) return 'n/a';
   if (v === 0) return '0';
   const abs = Math.abs(v);
   if (abs >= 1e9) return (v / 1e9).toFixed(1) + 'B';
@@ -445,7 +445,7 @@ function makeGroupedBarDatasets() {
 }
 
 function initCharts() {
-  // Init chart — horizontal bars (lower = better, reads cleaner sideways)
+  // Init chart. Horizontal bars: lower is better, reads cleaner sideways.
   charts.init = new Chart(document.getElementById('chart-init'), {
     type: 'bar',
     data: {
@@ -466,7 +466,7 @@ function initCharts() {
       layout: { padding: { top: 6, right: 60, bottom: 6, left: 0 } },
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.x?.toFixed(1) ?? '—'} ms` } },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.x?.toFixed(1) ?? 'n/a'} ms` } },
       },
       scales: {
         x: {
@@ -500,7 +500,7 @@ function initCharts() {
           tooltip: {
             callbacks: {
               title: (items) => items.length ? `${items[0].label} rows` : '',
-              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y != null ? Math.round(ctx.parsed.y).toLocaleString() : '—'}`,
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y != null ? Math.round(ctx.parsed.y).toLocaleString() : 'n/a'}`,
             },
           },
         },
@@ -565,7 +565,7 @@ function renderRawTable(results, sizes) {
     const r = results[eng];
     if (!r) continue;
     if (r.init) {
-      fragments.push(`<tr><td class="eng-${eng}">${ENGINE_LABEL[eng]}</td><td>init</td><td>—</td><td>${r.init.median.toFixed(2)}</td><td>${r.init.min.toFixed(2)}</td><td>${r.init.max.toFixed(2)}</td><td class="muted">—</td></tr>`);
+      fragments.push(`<tr><td class="eng-${eng}">${ENGINE_LABEL[eng]}</td><td>init</td><td>-</td><td>${r.init.median.toFixed(2)}</td><td>${r.init.min.toFixed(2)}</td><td>${r.init.max.toFixed(2)}</td><td class="muted">-</td></tr>`);
     }
     for (const op of ['write', 'readseq', 'randread', 'indexed']) {
       for (const sz of sizes) {
@@ -587,7 +587,7 @@ const progressEl = document.getElementById('progress');
 function setProgress(text, pct) {
   if (!text) {
     progressEl.className = 'progress idle';
-    progressEl.innerHTML = 'idle — click <em>Run benchmark</em> to begin';
+    progressEl.innerHTML = 'idle. click <em>Run benchmark</em> to begin';
     return;
   }
   progressEl.className = 'progress';
@@ -684,7 +684,7 @@ async function runAll() {
       results[eng].randread = results[eng].randread || {};
       results[eng].indexed = results[eng].indexed || {};
 
-      // bulk write — schema reset between reps
+      // bulk write: schema reset between reps
       bumpProgress(`${ENGINE_LABEL[eng]} · bulk write @ ${sz.toLocaleString()}`);
       results[eng].write[sz] = await measureRepeated(
         async () => { await e.resetSchema(); },
@@ -731,7 +731,7 @@ async function runAll() {
   }
 
   renderRawTable(results, sizes);
-  setProgress(`done — ${new Date().toLocaleTimeString()}`, 1);
+  setProgress(`done at ${new Date().toLocaleTimeString()}`, 1);
   setTimeout(() => setProgress(null), 4000);
   renderVersions(versions);
 
@@ -777,7 +777,7 @@ document.getElementById('reset').addEventListener('click', async () => {
   for (const eng of ORDER) {
     try { await ENGINES[eng].wipePersistent(); } catch {}
   }
-  setProgress('cleared — ready for a fresh run', 1);
+  setProgress('cleared. ready for a fresh run', 1);
   setTimeout(() => setProgress(null), 2500);
 });
 

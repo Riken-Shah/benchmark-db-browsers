@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .ink { fill: #0a0a0a; }
+      .ink2 { fill: #525252; }
+      .ink3 { fill: #a3a3a3; }
+      .line { stroke: #ededed; stroke-width: 1; }
+      .idb { fill: #404040; }
+      .sqlite { fill: #0d9488; }
+      .pglite { fill: #d97706; }
+      .sans { font-family: "Source Sans 3", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+      .mono { font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; }
+      .title { font-size: 76px; font-weight: 600; letter-spacing: -1.6px; }
+      .subtitle { font-size: 26px; font-weight: 400; }
+      .eyebrow { font-size: 14px; font-weight: 500; letter-spacing: 2.2px; text-transform: uppercase; }
+      .chip { font-size: 22px; font-weight: 500; }
+      .chip-store { font-size: 14px; font-weight: 400; }
+      .url { font-size: 16px; font-weight: 400; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="630"/>
+
+  <!-- top hairline -->
+  <line x1="80" y1="100" x2="1120" y2="100" class="line"/>
+
+  <!-- eyebrow -->
+  <text x="80" y="86" class="sans eyebrow ink3">CLIENT-SIDE BENCHMARK</text>
+
+  <!-- engine dots, top-right -->
+  <g>
+    <circle cx="980" cy="80" r="6" class="idb"/>
+    <circle cx="1010" cy="80" r="6" class="sqlite"/>
+    <circle cx="1040" cy="80" r="6" class="pglite"/>
+  </g>
+
+  <!-- title -->
+  <text x="80" y="220" class="sans title ink">IndexedDB vs SQLite</text>
+  <text x="80" y="310" class="sans title ink">WASM vs PGlite</text>
+
+  <!-- subtitle -->
+  <text x="80" y="370" class="sans subtitle ink2">Head-to-head benchmark running entirely in your browser.</text>
+  <text x="80" y="404" class="sans subtitle ink2">Load, write, sequential read, random read, indexed query.</text>
+
+  <!-- chips with storage labels -->
+  <g transform="translate(80, 470)">
+    <circle cx="10" cy="14" r="8" class="idb"/>
+    <text x="30" y="20" class="sans chip ink">IndexedDB</text>
+    <text x="30" y="44" class="mono chip-store ink3">browser-native</text>
+  </g>
+
+  <g transform="translate(360, 470)">
+    <circle cx="10" cy="14" r="8" class="sqlite"/>
+    <text x="30" y="20" class="sans chip ink">SQLite WASM</text>
+    <text x="30" y="44" class="mono chip-store ink3">OPFS SAH pool</text>
+  </g>
+
+  <g transform="translate(680, 470)">
+    <circle cx="10" cy="14" r="8" class="pglite"/>
+    <text x="30" y="20" class="sans chip ink">PGlite</text>
+    <text x="30" y="44" class="mono chip-store ink3">Postgres pages in IDB</text>
+  </g>
+
+  <!-- bottom hairline -->
+  <line x1="80" y1="560" x2="1120" y2="560" class="line"/>
+
+  <!-- URL -->
+  <text x="80" y="595" class="mono url ink2">benchmark-db-browsers.riken.me</text>
+  <text x="1120" y="595" class="mono url ink3" text-anchor="end">github.com/Riken-Shah/benchmark-db-browsers</text>
+</svg>
