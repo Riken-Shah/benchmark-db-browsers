@@ -1,4 +1,4 @@
-// Benchmark harness: IndexedDB vs SQLite WASM vs PGlite.
+// Benchmark harness: IndexedDB vs SQLite vs PGlite.
 // All measurement code lives here; SQLite work is delegated to ./sqlite-worker.js.
 
 // ---------- constants ----------
@@ -242,11 +242,14 @@ const pgliteEngine = (() => {
   let PGliteCtor = null;
   let pgVersion = null;
 
-  async function ensureModule() {
-    if (PGliteCtor) return PGliteCtor;
-    const mod = await import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.3.10/dist/index.js');
-    PGliteCtor = mod.PGlite;
-    return PGliteCtor;
+  let modulePromise = null;
+  function ensureModule() {
+    if (PGliteCtor) return Promise.resolve(PGliteCtor);
+    if (!modulePromise) {
+      modulePromise = import('https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.3.10/dist/index.js')
+        .then((mod) => { PGliteCtor = mod.PGlite; return PGliteCtor; });
+    }
+    return modulePromise;
   }
   async function closePg() {
     if (pg) { try { await pg.close(); } catch {} pg = null; }
@@ -330,6 +333,7 @@ const pgliteEngine = (() => {
         req.onsuccess = req.onerror = req.onblocked = () => resolve();
       });
     },
+    preload() { return ensureModule(); },
     get version() { return pgVersion; },
   };
 })();
@@ -438,7 +442,7 @@ function initCharts() {
   charts.init = new Chart(document.getElementById('chart-init'), {
     type: 'bar',
     data: {
-      labels: ['IndexedDB', 'SQLite WASM', 'PGlite'],
+      labels: ['IndexedDB', 'SQLite', 'PGlite'],
       datasets: [{
         data: [null, null, null],
         backgroundColor: [COLORS.idb.line, COLORS.sqlite.line, COLORS.pglite.line],
@@ -600,6 +604,7 @@ async function runAll() {
   if (running) return;
   running = true;
   document.getElementById('run').disabled = true;
+  const runStartedAt = performance.now();
 
   const mode = document.querySelector('input[name="mode"]:checked').value;
   const sizes = [...document.querySelectorAll('.sizes input:checked')]
@@ -720,8 +725,11 @@ async function runAll() {
   }
 
   renderRawTable(results, sizes);
-  setProgress(`done at ${new Date().toLocaleTimeString()}`, 1);
-  setTimeout(() => setProgress(null), 4000);
+  const elapsedSec = (performance.now() - runStartedAt) / 1000;
+  const elapsedFmt = elapsedSec >= 60
+    ? `${Math.floor(elapsedSec / 60)}m ${(elapsedSec % 60).toFixed(1)}s`
+    : `${elapsedSec.toFixed(1)}s`;
+  setProgress(`done in ${elapsedFmt} · finished at ${new Date().toLocaleTimeString()}`, 1);
   renderVersions(versions);
 
   running = false;
@@ -797,3 +805,12 @@ renderEnv();
 initCharts();
 setProgress(null);
 syncStorageLabels();
+
+// Preload the PGlite WASM bundle in the background so the first cold init
+// during the benchmark doesn't double as a network download (~8MB). The
+// import() return is cached by ensureModule, so the eventual init reuses it.
+if (typeof requestIdleCallback === 'function') {
+  requestIdleCallback(() => { pgliteEngine.preload().catch(() => {}); }, { timeout: 2000 });
+} else {
+  setTimeout(() => { pgliteEngine.preload().catch(() => {}); }, 250);
+}

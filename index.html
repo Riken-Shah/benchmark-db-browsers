@@ -4,14 +4,14 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Client-side DB Benchmark: IndexedDB vs SQLite vs PGlite</title>
-<meta name="description" content="Head-to-head benchmark of IndexedDB, SQLite WASM, and PGlite running entirely in your browser. Load, write, sequential read, random read, indexed query.">
+<meta name="description" content="Head-to-head benchmark of IndexedDB, SQLite, and PGlite running entirely in your browser. Load, write, sequential read, random read, indexed query.">
 <meta name="theme-color" content="#ffffff">
 <link rel="canonical" href="https://benchmark-db-browsers.riken.me/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Client-side DB Benchmark">
 <meta property="og:title" content="Client-side DB Benchmark: IndexedDB vs SQLite vs PGlite">
-<meta property="og:description" content="Head-to-head benchmark of IndexedDB, SQLite WASM, and PGlite running entirely in your browser.">
+<meta property="og:description" content="Head-to-head benchmark of IndexedDB, SQLite, and PGlite running entirely in your browser.">
 <meta property="og:url" content="https://benchmark-db-browsers.riken.me/">
 <meta property="og:image" content="https://benchmark-db-browsers.riken.me/og.png">
 <meta property="og:image:width" content="1200">
@@ -20,7 +20,7 @@
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Client-side DB Benchmark: IndexedDB vs SQLite vs PGlite">
-<meta name="twitter:description" content="Head-to-head benchmark of IndexedDB, SQLite WASM, and PGlite running entirely in your browser.">
+<meta name="twitter:description" content="Head-to-head benchmark of IndexedDB, SQLite, and PGlite running entirely in your browser.">
 <meta name="twitter:image" content="https://benchmark-db-browsers.riken.me/og.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -159,23 +159,25 @@
   .mode {
     display: inline-flex;
     background: var(--line-2);
+    border: 1px solid var(--line);
     border-radius: 6px;
     padding: 3px;
     font-size: 12.5px;
   }
   .mode label {
-    padding: 6px 12px;
+    padding: 7px 14px;
     cursor: pointer;
     color: var(--ink-2);
     user-select: none;
     border-radius: 4px;
-    transition: all .12s;
+    font-weight: 500;
+    transition: background .12s, color .12s;
   }
+  .mode label:hover { color: var(--ink); }
   .mode input { display: none; }
   .mode input:checked + label {
-    background: white;
-    color: var(--ink);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    background: var(--ink);
+    color: white;
   }
 
   .sizes {
@@ -236,8 +238,109 @@
   }
   @media (max-width: 760px) {
     .charts .grid-2 { grid-template-columns: 1fr; }
-    main { padding: 48px 20px 64px; }
-    h1 { font-size: 24px; }
+  }
+  @media (max-width: 640px) {
+    main { padding: 32px 18px 56px; }
+    header { margin-bottom: 32px; }
+    h1 { font-size: 22px; line-height: 1.22; margin-bottom: 12px; }
+    .sub { font-size: 14px; line-height: 1.5; }
+    .sub a { word-break: break-word; }
+    .meta {
+      margin-top: 18px;
+      gap: 12px;
+      flex-direction: column;
+      align-items: flex-start;
+      font-size: 12.5px;
+    }
+    .meta .env { font-size: 10.5px; line-height: 1.45; }
+    .legend { gap: 14px 18px; }
+    .legend .eng { font-size: 13px; }
+    .legend .store { font-size: 10.5px; }
+
+    .controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      padding: 16px 0;
+      margin-bottom: 8px;
+    }
+    button.primary {
+      width: 100%;
+      padding: 12px 18px;
+      font-size: 14px;
+      touch-action: manipulation;
+    }
+    button.ghost {
+      width: 100%;
+      margin-left: 0;
+      padding: 10px 14px;
+      font-size: 13px;
+      touch-action: manipulation;
+    }
+    .mode {
+      width: 100%;
+      padding: 4px;
+      font-size: 13px;
+    }
+    .mode label {
+      flex: 1;
+      text-align: center;
+      padding: 9px 12px;
+      touch-action: manipulation;
+    }
+    .sizes {
+      padding-left: 0;
+      margin-left: 0;
+      border-left: 0;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      width: 100%;
+      font-size: 13px;
+    }
+    .sizes > span { width: 100%; margin-right: 0; }
+    .sizes label {
+      flex: 1;
+      min-width: 70px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      justify-content: center;
+      touch-action: manipulation;
+    }
+    .sizes input { transform: scale(1.1); }
+
+    .progress {
+      font-size: 11px;
+      padding: 10px 0 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .progress .bar { flex: 1 1 100%; max-width: 100%; }
+
+    .charts { gap: 26px; }
+    .charts .grid-2 { gap: 26px; }
+    .card .head { gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+    .card h3 { font-size: 14.5px; }
+    .card .desc { font-size: 12px; }
+    .card .unit { font-size: 10px; padding-top: 2px; }
+    .chart-wrap { height: 220px; }
+    .chart-wrap.short { height: 200px; }
+    .card.full { padding-bottom: 18px; }
+
+    details.raw { margin-top: 40px; padding-top: 20px; }
+    table.raw { font-size: 11px; }
+    table.raw th, table.raw td { padding: 7px 6px; }
+    table.raw th { font-size: 10px; }
+
+    footer {
+      margin-top: 44px;
+      padding-top: 18px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 10.5px;
+    }
   }
   .card {
     padding: 4px 0 4px;
