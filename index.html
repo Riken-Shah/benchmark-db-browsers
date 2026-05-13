@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Client-side DB Benchmark — IndexedDB · SQLite WASM · PGlite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #0a0a0a;
+    --ink-2: #525252;
+    --ink-3: #a3a3a3;
+    --line: #ededed;
+    --line-2: #f7f7f7;
+    --idb: #404040;
+    --sqlite: #0d9488;
+    --pglite: #d97706;
+    --bad: #b91c1c;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  main {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 80px 40px 96px;
+  }
+  header { margin-bottom: 56px; }
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 14px;
+    line-height: 1.2;
+  }
+  .sub {
+    color: var(--ink-2);
+    font-size: 15px;
+    max-width: 620px;
+    margin: 0;
+  }
+  .meta {
+    margin-top: 28px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .meta .env {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11.5px;
+  }
+  .legend {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+  }
+  .legend .eng {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+    color: var(--ink-2);
+    line-height: 1.25;
+  }
+  .legend .eng > i {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block;
+    align-self: center;
+    flex: 0 0 auto;
+  }
+  .legend .store {
+    color: var(--ink-3);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    margin-left: 2px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 22px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 12px;
+  }
+  button.primary {
+    background: var(--ink);
+    color: white;
+    border: none;
+    padding: 9px 18px;
+    font: inherit;
+    font-weight: 500;
+    font-size: 13.5px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  button.primary:hover:not(:disabled) { opacity: 0.85; }
+  button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.ghost {
+    background: transparent;
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    padding: 8px 14px;
+    font: inherit;
+    font-size: 12.5px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  button.ghost:hover { border-color: var(--ink-3); color: var(--ink); }
+
+  .mode {
+    display: inline-flex;
+    background: var(--line-2);
+    border-radius: 6px;
+    padding: 3px;
+    font-size: 12.5px;
+  }
+  .mode label {
+    padding: 6px 12px;
+    cursor: pointer;
+    color: var(--ink-2);
+    user-select: none;
+    border-radius: 4px;
+    transition: all .12s;
+  }
+  .mode input { display: none; }
+  .mode input:checked + label {
+    background: white;
+    color: var(--ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .sizes {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    padding-left: 8px;
+    border-left: 1px solid var(--line);
+    margin-left: 4px;
+  }
+  .sizes > span { color: var(--ink-3); margin-right: 4px; }
+  .sizes label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .sizes input { accent-color: var(--ink); }
+
+  .progress {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--ink-2);
+    min-height: 20px;
+    padding: 14px 0 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .progress.idle { color: var(--ink-3); }
+  .progress .bar {
+    flex: 0 0 180px;
+    height: 3px;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress .bar > i {
+    display: block;
+    height: 100%;
+    background: var(--ink);
+    width: 0%;
+    transition: width .25s ease;
+  }
+
+  .charts {
+    display: grid;
+    gap: 28px;
+  }
+  .charts .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  @media (max-width: 760px) {
+    .charts .grid-2 { grid-template-columns: 1fr; }
+    main { padding: 48px 20px 64px; }
+    h1 { font-size: 24px; }
+  }
+  .card {
+    padding: 4px 0 4px;
+  }
+  .card .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: -0.005em;
+  }
+  .card .desc {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    margin: 0;
+    line-height: 1.45;
+  }
+  .card .unit {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 240px;
+  }
+  .chart-wrap.short { height: 180px; }
+  .card.full {
+    grid-column: 1 / -1;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 4px;
+  }
+
+  details.raw {
+    margin-top: 56px;
+    border-top: 1px solid var(--line);
+    padding-top: 28px;
+  }
+  details.raw summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--ink-2);
+    user-select: none;
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  details.raw summary::-webkit-details-marker { display: none; }
+  details.raw summary::before {
+    content: '+';
+    color: var(--ink-3);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    transition: transform .15s;
+    display: inline-block;
+  }
+  details.raw[open] summary::before { content: '−'; }
+  details.raw summary:hover { color: var(--ink); }
+  table.raw {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 18px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  table.raw th, table.raw td {
+    text-align: right;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line-2);
+  }
+  table.raw th:first-child, table.raw td:first-child { text-align: left; }
+  table.raw th {
+    font-weight: 500;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--line);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  table.raw td.muted { color: var(--ink-3); }
+  table.raw .eng-idb { color: var(--idb); }
+  table.raw .eng-sqlite { color: var(--sqlite); }
+  table.raw .eng-pglite { color: var(--pglite); }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px;
+    color: var(--ink-3);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  footer a { color: var(--ink-2); text-decoration: none; border-bottom: 1px dotted var(--ink-3); }
+  footer a:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Client-side database benchmark</h1>
+    <p class="sub">A head-to-head comparison of IndexedDB, SQLite WASM, and PGlite running entirely in your browser. One warmup run, three timed runs, median reported.</p>
+    <div class="meta">
+      <div class="legend">
+        <span class="eng"><i style="background:var(--idb)"></i> IndexedDB <span class="store">browser-native</span></span>
+        <span class="eng"><i style="background:var(--sqlite)"></i> SQLite WASM <span class="store">OPFS · SAH pool</span></span>
+        <span class="eng"><i style="background:var(--pglite)"></i> PGlite <span class="store">Postgres pages in IndexedDB</span></span>
+      </div>
+      <div class="env" id="env">detecting environment…</div>
+    </div>
+  </header>
+
+  <section class="controls">
+    <button id="run" class="primary">Run benchmark</button>
+    <div class="mode" role="radiogroup" aria-label="Storage mode">
+      <input type="radio" id="mode-persist" name="mode" value="persistent" checked>
+      <label for="mode-persist">Persistent</label>
+      <input type="radio" id="mode-mem" name="mode" value="memory">
+      <label for="mode-mem">In-memory</label>
+    </div>
+    <div class="sizes" aria-label="Dataset sizes">
+      <span>rows</span>
+      <label><input type="checkbox" value="1000"> 1k</label>
+      <label><input type="checkbox" value="10000" checked> 10k</label>
+      <label><input type="checkbox" value="100000"> 100k</label>
+    </div>
+    <button id="reset" class="ghost" title="Drop all persistent stores and reload">Clear storage</button>
+  </section>
+
+  <div class="progress idle" id="progress">idle — click <em>Run benchmark</em> to begin</div>
+
+  <section class="charts" id="charts">
+    <div class="card full">
+      <div class="head">
+        <div>
+          <h3>Load &amp; init</h3>
+          <p class="desc">Time from import to a ready, empty schema. Lower is better.</p>
+        </div>
+        <div class="unit">milliseconds</div>
+      </div>
+      <div class="chart-wrap short"><canvas id="chart-init"></canvas></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="head">
+          <div>
+            <h3>Bulk write</h3>
+            <p class="desc">Insert N rows in a single transaction. Higher is better.</p>
+          </div>
+          <div class="unit">rows / sec</div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-write"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <div>
+            <h3>Sequential read</h3>
+            <p class="desc">Read all N rows back in order. Higher is better.</p>
+          </div>
+          <div class="unit">rows / sec</div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-readseq"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <div>
+            <h3>Random point read</h3>
+            <p class="desc">200 lookups by random primary key. Higher is better.</p>
+          </div>
+          <div class="unit">reads / sec</div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-randread"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <div>
+            <h3>Indexed query</h3>
+            <p class="desc">200 lookups by indexed email column. Higher is better.</p>
+          </div>
+          <div class="unit">reads / sec</div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-indexed"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <details class="raw">
+    <summary>Raw measurements</summary>
+    <table class="raw" id="rawtable">
+      <thead>
+        <tr><th>Engine</th><th>Operation</th><th>Rows</th><th>Median (ms)</th><th>Min (ms)</th><th>Max (ms)</th><th>Ops/sec</th></tr>
+      </thead>
+      <tbody><tr><td colspan="7" class="muted">no runs yet</td></tr></tbody>
+    </table>
+  </details>
+
+  <footer>
+    <div id="versions">versions loading…</div>
+    <div>benchmark-db-browsers.riken.me</div>
+  </footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
