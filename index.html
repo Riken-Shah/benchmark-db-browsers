@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Client-side DB Benchmark: IndexedDB vs SQLite WASM vs PGlite</title>
+<title>Client-side DB Benchmark: IndexedDB vs SQLite vs PGlite</title>
 <meta name="description" content="Head-to-head benchmark of IndexedDB, SQLite WASM, and PGlite running entirely in your browser. Load, write, sequential read, random read, indexed query.">
 <meta name="theme-color" content="#ffffff">
 <link rel="canonical" href="https://benchmark-db-browsers.riken.me/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Client-side DB Benchmark">
-<meta property="og:title" content="Client-side DB Benchmark: IndexedDB vs SQLite WASM vs PGlite">
+<meta property="og:title" content="Client-side DB Benchmark: IndexedDB vs SQLite vs PGlite">
 <meta property="og:description" content="Head-to-head benchmark of IndexedDB, SQLite WASM, and PGlite running entirely in your browser.">
 <meta property="og:url" content="https://benchmark-db-browsers.riken.me/">
 <meta property="og:image" content="https://benchmark-db-browsers.riken.me/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Client-side DB Benchmark: IndexedDB vs SQLite WASM vs PGlite">
+<meta property="og:image:alt" content="Client-side DB Benchmark: IndexedDB vs SQLite vs PGlite">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Client-side DB Benchmark: IndexedDB vs SQLite WASM vs PGlite">
+<meta name="twitter:title" content="Client-side DB Benchmark: IndexedDB vs SQLite vs PGlite">
 <meta name="twitter:description" content="Head-to-head benchmark of IndexedDB, SQLite WASM, and PGlite running entirely in your browser.">
 <meta name="twitter:image" content="https://benchmark-db-browsers.riken.me/og.png">
 
@@ -109,6 +109,8 @@
     font-size: 11px;
     margin-left: 2px;
   }
+  .legend .eng.disabled { opacity: 0.45; }
+  .legend .eng.disabled .store { font-style: italic; }
 
   .controls {
     display: flex;
@@ -347,9 +349,9 @@
     <p class="sub">A head-to-head comparison of IndexedDB, SQLite WASM, and PGlite running entirely in your browser. One warmup run, three timed runs, median reported.</p>
     <div class="meta">
       <div class="legend">
-        <span class="eng"><i style="background:var(--idb)"></i> IndexedDB <span class="store">browser-native</span></span>
-        <span class="eng"><i style="background:var(--sqlite)"></i> SQLite WASM <span class="store">OPFS · SAH pool</span></span>
-        <span class="eng"><i style="background:var(--pglite)"></i> PGlite <span class="store">Postgres pages in IndexedDB</span></span>
+        <span class="eng" id="eng-idb"><i style="background:var(--idb)"></i> IndexedDB <span class="store" id="store-idb">browser-native</span></span>
+        <span class="eng" id="eng-sqlite"><i style="background:var(--sqlite)"></i> SQLite <span class="store" id="store-sqlite">OPFS · SAH pool</span></span>
+        <span class="eng" id="eng-pglite"><i style="background:var(--pglite)"></i> PGlite <span class="store" id="store-pglite">Postgres pages in IndexedDB</span></span>
       </div>
       <div class="env" id="env">detecting environment…</div>
     </div>
@@ -413,7 +415,7 @@
         <div class="head">
           <div>
             <h3>Random point read</h3>
-            <p class="desc">200 lookups by random primary key. Higher is better.</p>
+            <p class="desc">100 lookups by random primary key. Higher is better.</p>
           </div>
           <div class="unit">reads / sec</div>
         </div>
@@ -424,7 +426,7 @@
         <div class="head">
           <div>
             <h3>Indexed query</h3>
-            <p class="desc">200 lookups by indexed email column. Higher is better.</p>
+            <p class="desc">100 lookups by indexed email column. Higher is better.</p>
           </div>
           <div class="unit">reads / sec</div>
         </div>

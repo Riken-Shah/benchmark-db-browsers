@@ -1,6 +1,6 @@
 # Client-side database benchmark
 
-A head-to-head comparison of three browser-native databases (IndexedDB, SQLite WASM, and PGlite) running entirely in the browser, with no server, no build step, and no dependencies beyond CDN imports.
+A head-to-head comparison of three browser-native databases (IndexedDB, SQLite, and PGlite) running entirely in the browser, with no server, no build step, and no dependencies beyond CDN imports.
 
 **Live demo:** https://benchmark-db-browsers.riken.me
 
@@ -23,7 +23,7 @@ Each measurement runs **1 warmup pass + 3 timed passes**, reporting the median.
 | Engine | Persistent storage |
 |---|---|
 | IndexedDB | Browser-native (this *is* the storage) |
-| SQLite WASM | OPFS, via the **SAH (Sync Access Handle) Pool VFS**: Sync Access Handles in a dedicated worker, no SharedArrayBuffer required |
+| SQLite | OPFS, via the **SAH (Sync Access Handle) Pool VFS**: Sync Access Handles in a dedicated worker, no SharedArrayBuffer required |
 | PGlite | Real Postgres compiled to WASM. Pages stored in **IndexedDB** (`idb://` driver) |
 
 The "in-memory" toggle runs SQLite as `:memory:` and PGlite as `memory://`. IndexedDB has no in-memory mode and is shown as N/A in that mode.

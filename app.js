@@ -9,7 +9,7 @@ const COLORS = {
   pglite: { line: '#d97706', fill: 'rgba(217,119,6,0.08)' },
 };
 
-const ENGINE_LABEL = { idb: 'IndexedDB', sqlite: 'SQLite WASM', pglite: 'PGlite' };
+const ENGINE_LABEL = { idb: 'IndexedDB', sqlite: 'SQLite', pglite: 'PGlite' };
 const OPS = ['init', 'write', 'readseq', 'randread', 'indexed'];
 const OP_LABEL = {
   init: 'Load & init (ms)',
@@ -21,7 +21,7 @@ const OP_LABEL = {
 
 const WARMUP = 1;
 const REPS = 3;
-const PROBE_COUNT = 200; // number of point / indexed lookups per measured run
+const PROBE_COUNT = 100; // number of point / indexed lookups per measured run
 
 // ---------- utilities ----------
 
@@ -767,6 +767,29 @@ function renderVersions(versions) {
   document.getElementById('versions').textContent = parts.join(' · ') || ' ';
 }
 
+// ---------- storage labels (mode-aware) ----------
+
+const STORAGE_LABELS = {
+  persistent: {
+    idb: 'browser-native',
+    sqlite: 'OPFS · SAH pool',
+    pglite: 'Postgres pages in IndexedDB',
+  },
+  memory: {
+    idb: 'n/a (persistent only)',
+    sqlite: ':memory:',
+    pglite: 'memory://',
+  },
+};
+function syncStorageLabels() {
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  for (const eng of ['idb', 'sqlite', 'pglite']) {
+    document.getElementById('store-' + eng).textContent = STORAGE_LABELS[mode][eng];
+    document.getElementById('eng-' + eng).classList.toggle('disabled', mode === 'memory' && eng === 'idb');
+  }
+}
+document.querySelectorAll('input[name="mode"]').forEach((r) => r.addEventListener('change', syncStorageLabels));
+
 // ---------- wire up ----------
 
 document.getElementById('run').addEventListener('click', runAll);
@@ -784,3 +807,4 @@ document.getElementById('reset').addEventListener('click', async () => {
 renderEnv();
 initCharts();
 setProgress(null);
+syncStorageLabels();
