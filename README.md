@@ -5,7 +5,6 @@ A head-to-head comparison of three browser-native databases ([IndexedDB](https:/
 PGlite is a newer take: real PostgreSQL compiled to WASM, running in your tab with its data dir backed by IndexedDB.
 
 **Live demo:** https://benchmark-db-browsers.riken.me
-**Source:** https://github.com/Riken-Shah/benchmark-db-browsers (open source, MIT)
 
 ## What it measures
 
@@ -50,15 +49,6 @@ Each engine uses its own idiomatic best path, not a one-shape-fits-all loop. The
 | Seq read | `openCursor` iterate, materialize each row | prepared `SELECT` + step loop, materialize each row | single `pg.query('SELECT ... ORDER BY id')` |
 | Random point read | all 100 `get(id)` queued in one read-only tx, `Promise.all` on completion | prepared `SELECT` bound in a tight worker-side loop, no postMessage per query | `PREPARE qpt`, `BEGIN`, `EXECUTE qpt($1)` loop, `COMMIT`, `DEALLOCATE` |
 | Indexed query | same pattern via `index('email')` | same pattern by `email` | same pattern by `email` |
-
-Honest asymmetries:
-- IDB's "queue all gets in one tx" is structurally faster than the sequential loops used by SQLite/PGlite. It's also the correct way to batch IDB reads in real apps, so the benchmark measures what users would actually write.
-- PGlite is intrinsically async per query (each query has internal `await`s into IDB-backed pages). SQLite's WASM in a worker handles 100 lookups in a single tight loop with no per-query event-loop yield.
-- PGlite includes `ANALYZE` in bulk-write time so the planner has stats; this penalizes its write number and improves its read numbers.
-
-The takeaway: the numbers are honest reflections of each engine's typical cost, not a contrived race.
-
-PGlite is fundamentally slower than the other two at random point reads. It is the full Postgres engine traversing a B-tree backed by async IndexedDB pages, where SQLite uses purpose-built WASM and IDB uses a single keyed lookup. That gap is honest, not a bug.
 
 ## Run it locally
 
